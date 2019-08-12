@@ -1,11 +1,10 @@
 import re
 import sys
-import pandas as pd
-import numpy as np
-from lxml import html
-from pprint import pprint
 
+import numpy as np
+import pandas as pd
 import requests
+from lxml import html
 
 
 def get_link(topic):
@@ -52,20 +51,21 @@ def get_topic_links(topic):
 
 def get_topic_links_text(topic):
     links = get_topic_links(topic)
-    words = []
     for link in links:
         w_ = get_page_text(link)
-        words.extend(w_)
         print(link, len(w_))
-    return words
+        yield w_
 
 
 def save_to_file(words, filename):
     df = pd.DataFrame(columns=['word', 'count'], data=np.array(words))
-    df.to_csv(f'{filename}.csv')
+    df.to_csv(f'{filename}.csv', index=False)
 
 
+# EXAMPLE: py wiki.py детектив
 if __name__ == '__main__':
     topic = sys.argv[1]
-    words = get_common_words(get_topic_links_text(topic))
-    save_to_file(words, topic)
+    for i, text in enumerate(get_topic_links_text(topic)):
+        words = get_common_words(text)
+        if len(text) > 0:
+            save_to_file(words, f'{topic}_#{i + 1}')
