@@ -1,6 +1,7 @@
 import re
 import sys
 import pandas as pd
+import numpy as np
 from lxml import html
 from pprint import pprint
 
@@ -59,6 +60,12 @@ def get_topic_links_text(topic):
     return words
 
 
+def save_to_file(words, filename):
+    df = pd.DataFrame(columns=['word', 'count'], data=np.array(words))
+    df.to_csv(f'{filename}.csv')
+
+
 if __name__ == '__main__':
     topic = sys.argv[1]
-    get_common_words(get_topic_links_text(topic))
+    words = get_common_words(get_topic_links_text(topic))
+    save_to_file(words, topic)
