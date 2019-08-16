@@ -2,7 +2,7 @@ import sys
 import pandas as pd
 from urllib.parse import urlencode
 from bs4 import BeautifulSoup as bs
-
+import math
 import requests
 
 base_url = 'https://hh.ru'
@@ -29,10 +29,10 @@ def get_entry_page(lang):
     return html
 
 
-def scrap_pages(lang):
+def scrap_pages(lang, pages):
     html = get_entry_page(lang)
     doc = parse(html)
-    obj_list = load_next_page(doc)
+    obj_list = load_next_page(doc, pages-1)
 
     df = pd.DataFrame(columns=['position', 'offer', 'link'])
 
@@ -47,24 +47,29 @@ def scrap_pages(lang):
     save_file(df)
 
 
-def load_next_page(doc, obj_list=[]):
+def load_next_page(doc, pages, obj_list=[]):
     obj_list.extend(doc.find_all('div', {'class': 'vacancy-serp-item'}))
     btn_next = doc.find('a', {'class': 'HH-Pager-Controls-Next'})
+
+    if pages < 1:
+        return obj_list
 
     if btn_next:
         next_link = btn_next['href']
         doc = parse(requests.get(base_url + next_link, headers=headers).text)
-        load_next_page(doc, obj_list)
+        load_next_page(doc, pages - 1, obj_list)
 
     return obj_list
 
 
 def save_file(df):
+    print(df.describe())
     df.to_csv('hh.csv', index=False)
 
 
-# EXAMPLE: py hh.py "java python c# web javascript"
+# EXAMPLE: py hh.py "java python c# web" 2
 if __name__ == '__main__':
     lang = f' {sys.argv[1]}' if len(sys.argv) > 1 else ''
+    pages = int(sys.argv[2]) if len(sys.argv) > 2 else math.inf
 
-    scrap_pages(lang)
+    scrap_pages(lang, pages)
