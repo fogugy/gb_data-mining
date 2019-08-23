@@ -1,3 +1,4 @@
+import math
 import sys
 from datetime import datetime, date, timedelta
 
@@ -36,6 +37,28 @@ def get_currency_for_date(currency, from_, to_):
                     )
 
 
+def get_currency_difference(currency, from_, to_):
+    get_currency_for_date(currency, from_, to_)
+    d_from = datetime.strptime(from_, date_format)
+    d_to = datetime.strptime(to_, date_format)
+
+    max_ = 0.0
+    min_ = math.inf
+    date_min = None
+    date_max = None
+    for x in db[currency].find({'date': {'$gte': d_from, '$lte': d_to}}).sort('date'):
+        val = x['value'].to_decimal()
+        if max_ < val:
+            max_ = val
+            date_max = x['date']
+        if min_ > val:
+            min_ = val
+            date_min = x['date']
+
+    delta = max_ - min_
+    return date_max, date_min, delta
+
+
 # EXAMPLE: py rub_rate.py AUD 2019-02-01 2019-02-10
 if __name__ == "__main__":
     today = date.today()
@@ -43,4 +66,8 @@ if __name__ == "__main__":
     from_ = sys.argv[2] if len(sys.argv) > 2 else today
     to_ = sys.argv[3] if len(sys.argv) > 3 else today
 
-    get_currency_for_date(currency, from_, to_)
+    date_max, date_min, delta = get_currency_difference(currency, from_, to_)
+
+    print(f'Валюту {currency} надо было покупать {date_min.strftime(date_format)}', end=' ')
+    print(f'а продавать {date_max.strftime(date_format)}')
+    print('Прибыль:', delta)
