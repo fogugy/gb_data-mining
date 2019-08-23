@@ -31,7 +31,7 @@ def get_currency_for_date(currency, from_, to_):
                         'value': Decimal128(item['ValuteCursOnDate']['Vcurs']),
                     }
                     db[currency].update_one(
-                        {'cur_date': rec['date']},
+                        {'date': rec['date']},
                         {'$set': rec},
                         upsert=True,
                     )
